@@ -285,8 +285,8 @@ class Converters(commands.Cog):
     @m.command(name="ft")
     async def meter(self, ctx: commands.Context, length: float):
         """Convert meters to feet."""
-        feet = round(length * 3.28084, 2)
-        await ctx.send(_("{length:,} m is equal to {feet:,} ft.").format(length=length, feet=feet))
+        feet = length * 3.280839895  # Use the exact conversion factor
+        await ctx.send(_("{length} m is equal to {feet:.2f} ft.").format(length=length, feet=feet))  # Round only in the output
 
     @conv.group()
     async def ft(self, ctx: commands.Context):
@@ -301,5 +301,5 @@ class Converters(commands.Cog):
     @ft.command(name="m")
     async def feet(self, ctx: commands.Context, length: float):
         """Convert feet to meters."""
-        meters = round(length / 3.28084, 2)
-        await ctx.send(_("{length:,} ft is equal to {meters:,} m.").format(length=length, meters=meters))
+        meters = length * 0.3048  # Use the exact conversion factor
+        await ctx.send(_("{length} ft is equal to {meters:.2f} m.").format(length=length, meters=meters))  # Round only in the output
