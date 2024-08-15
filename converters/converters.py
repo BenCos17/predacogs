@@ -32,6 +32,13 @@ class Converters(commands.Cog):
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
+    def calculate_time_difference(self, past: datetime, current: datetime) -> str:
+        """Calculate the time difference and return a formatted string."""
+        secs = str((current - past).total_seconds())
+        seconds = secs[1:][:-2] if "-" in secs else secs[:-2] if ".0" in secs else secs
+        delta = humanize_timedelta(seconds=int(seconds))
+        return delta
+
     @commands.group(aliases=["converter"])
     async def conv(self, ctx: commands.Context):
         """Some utility converters."""
@@ -44,10 +51,8 @@ class Converters(commands.Cog):
                 "%Y-%m-%d %H:%M:%S"
             )
             g = datetime.fromtimestamp(int(timestamp))
-            curr = datetime.fromtimestamp(int(datetime.now().timestamp()))
-            secs = str((curr - g).total_seconds())
-            seconds = secs[1:][:-2] if "-" in secs else secs[:-2] if ".0" in secs else secs
-            delta = humanize_timedelta(seconds=int(seconds))
+            curr = datetime.now(timezone.utc)
+            delta = self.calculate_time_difference(g, curr)
             when = (
                 _("It will be in {}.").format(delta)
                 if g > curr
@@ -58,8 +63,8 @@ class Converters(commands.Cog):
                     timestamp=int(timestamp), convert=convert, when=when
                 )
             )
-        except (ValueError, OverflowError, OSError):
-            return await ctx.send(_("`{}` is not a valid timestamp.").format(timestamp))
+        except (ValueError, OverflowError, OSError) as e:
+            await ctx.send(_("Error: `{}` is not a valid timestamp.").format(timestamp))
 
     @conv.command()
     async def tounix(self, ctx: commands.Context, *, date: str):
@@ -87,10 +92,8 @@ class Converters(commands.Cog):
             given = datetime.fromtimestamp(int(convert))
         except UnboundLocalError:
             return await ctx.send(_("`{}` is not a valid timestamp.").format(date))
-        curr = datetime.fromtimestamp(int(datetime.now().timestamp()))
-        secs = str((curr - given).total_seconds())
-        seconds = secs[1:][:-2] if "-" in secs else secs[:-2] if ".0" in secs else secs
-        delta = humanize_timedelta(seconds=int(seconds))
+        curr = datetime.now(timezone.utc)
+        delta = self.calculate_time_difference(given, curr)
         when = (
             _("It will be in {}.").format(delta)
             if given > curr
@@ -268,3 +271,35 @@ class Converters(commands.Cog):
         """Convert millimeters to inches."""
         inches = round((length / 25.4), 2)
         await ctx.send(_("{length:,} mm is equal to {inches:,} in.").format(length=length, inches=inches))
+
+    @conv.group()
+    async def m(self, ctx: commands.Context):
+        """
+        Convert meters to feet.
+        See correct usage below.
+
+        Usage:
+        `[p]conv m ft`
+        """
+
+    @m.command(name="ft")
+    async def meter(self, ctx: commands.Context, length: float):
+        """Convert meters to feet."""
+        feet = round(length * 3.28084, 2)
+        await ctx.send(_("{length:,} m is equal to {feet:,} ft.").format(length=length, feet=feet))
+
+    @conv.group()
+    async def ft(self, ctx: commands.Context):
+        """
+        Convert feet to meters.
+        See correct usage below.
+
+        Usage:
+        `[p]conv ft m`
+        """
+
+    @ft.command(name="m")
+    async def feet(self, ctx: commands.Context, length: float):
+        """Convert feet to meters."""
+        meters = round(length / 3.28084, 2)
+        await ctx.send(_("{length:,} ft is equal to {meters:,} m.").format(length=length, meters=meters))
