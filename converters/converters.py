@@ -32,6 +32,13 @@ class Converters(commands.Cog):
         pre_processed = super().format_help_for_context(ctx)
         return f"{pre_processed}\n\nAuthor: {self.__author__}\nCog Version: {self.__version__}"
 
+    def calculate_time_difference(self, past: datetime, current: datetime) -> str:
+        """Calculate the time difference and return a formatted string."""
+        secs = str((current - past).total_seconds())
+        seconds = secs[1:][:-2] if "-" in secs else secs[:-2] if ".0" in secs else secs
+        delta = humanize_timedelta(seconds=int(seconds))
+        return delta
+
     @commands.group(aliases=["converter"])
     async def conv(self, ctx: commands.Context):
         """Some utility converters."""
@@ -44,10 +51,8 @@ class Converters(commands.Cog):
                 "%Y-%m-%d %H:%M:%S"
             )
             g = datetime.fromtimestamp(int(timestamp))
-            curr = datetime.fromtimestamp(int(datetime.now().timestamp()))
-            secs = str((curr - g).total_seconds())
-            seconds = secs[1:][:-2] if "-" in secs else secs[:-2] if ".0" in secs else secs
-            delta = humanize_timedelta(seconds=int(seconds))
+            curr = datetime.now(timezone.utc)
+            delta = self.calculate_time_difference(g, curr)
             when = (
                 _("It will be in {}.").format(delta)
                 if g > curr
@@ -58,8 +63,8 @@ class Converters(commands.Cog):
                     timestamp=int(timestamp), convert=convert, when=when
                 )
             )
-        except (ValueError, OverflowError, OSError):
-            return await ctx.send(_("`{}` is not a valid timestamp.").format(timestamp))
+        except (ValueError, OverflowError, OSError) as e:
+            await ctx.send(_("Error: `{}` is not a valid timestamp.").format(timestamp))
 
     @conv.command()
     async def tounix(self, ctx: commands.Context, *, date: str):
@@ -87,10 +92,8 @@ class Converters(commands.Cog):
             given = datetime.fromtimestamp(int(convert))
         except UnboundLocalError:
             return await ctx.send(_("`{}` is not a valid timestamp.").format(date))
-        curr = datetime.fromtimestamp(int(datetime.now().timestamp()))
-        secs = str((curr - given).total_seconds())
-        seconds = secs[1:][:-2] if "-" in secs else secs[:-2] if ".0" in secs else secs
-        delta = humanize_timedelta(seconds=int(seconds))
+        curr = datetime.now(timezone.utc)
+        delta = self.calculate_time_difference(given, curr)
         when = (
             _("It will be in {}.").format(delta)
             if given > curr
