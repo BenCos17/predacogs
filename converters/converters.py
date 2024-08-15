@@ -252,3 +252,19 @@ class Converters(commands.Cog):
         """Convert kilometers to miles."""
         mi = round((length / 1.609344), 1)
         await ctx.send(_("{length:,} km is equal to {mi:,} mi.").format(length=length, mi=mi))
+
+    @conv.group()
+    async def mm(self, ctx: commands.Context):
+        """
+        Convert millimeters to inches.
+        See correct usage bellow.
+
+        Usage:
+        `[p]conv mm in`
+        """
+
+    @mm.command(name="in")
+    async def mm_to_in(self, ctx: commands.Context, length: float):
+        """Convert millimeters to inches."""
+        inches = round((length / 25.4), 2)
+        await ctx.send(_("{length:,} mm is equal to {inches:,} in.").format(length=length, inches=inches))
