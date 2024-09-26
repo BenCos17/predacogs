@@ -12,37 +12,35 @@ _ = Translator("Image", __file__)
 class RandImages(Core, commands.Cog):
     """Send random images (animals, art ...) from different APIs."""
 
-    def __init__(self, bot):
+    def __init__(self, bot: Red):
         self.bot = bot
+        self.config = Config.get_conf(self, identifier=80085)
+        default_global = {
+            "reddit_client_id": None,
+            "reddit_client_secret": None,
+            "reddit_user_agent": None
+        }
+        self.config.register_global(**default_global)
         self.reddit = None
 
     async def initialize(self):
-        tokens = await self.bot.get_shared_api_tokens("reddit")
-        if tokens.get("client_id") and tokens.get("client_secret") and tokens.get("user_agent"):
+        client_id = await self.config.reddit_client_id()
+        client_secret = await self.config.reddit_client_secret()
+        user_agent = await self.config.reddit_user_agent()
+        
+        if all([client_id, client_secret, user_agent]):
             self.reddit = praw.Reddit(
-                client_id=tokens["client_id"],
-                client_secret=tokens["client_secret"],
-                user_agent=tokens["user_agent"]
+                client_id=client_id,
+                client_secret=client_secret,
+                user_agent=user_agent
             )
             print("Debug - Reddit instance created successfully")
         else:
             print("Debug - Not all Reddit credentials are set")
-            print(f"Debug - Available tokens: {tokens}")
-
-    @commands.command()
-    @checks.is_owner()
-    async def setredditcredentials(self, ctx, client_id: str, client_secret: str, user_agent: str):
-        """Set Reddit API credentials"""
-        await self.bot.set_shared_api_tokens("reddit", 
-                                             client_id=client_id, 
-                                             client_secret=client_secret, 
-                                             user_agent=user_agent)
-        await self.initialize()
-        await ctx.send("Reddit credentials set.")
 
     async def _send_reddit_msg(self, ctx, name, emoji, sub, details):
         if not self.reddit:
-            return await ctx.send("Reddit credentials not set. Please set them with `[p]setredditcredentials`")
+            return await ctx.send("Reddit credentials not set. Please set them with `[p]set api reddit`")
         
         subreddit = self.reddit.subreddit('+'.join(sub))
         submissions = list(subreddit.hot(limit=100))
@@ -352,6 +350,11 @@ class RandImages(Core, commands.Cog):
             sub=sub.WALLPAPERS,
             details=True,
         )
+
+def setup(bot):
+    cog = RandImages(bot)
+    bot.add_cog(cog)
+    bot.loop.create_task(cog.initialize())
 
 
 
