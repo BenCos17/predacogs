@@ -1,6 +1,7 @@
 import praw
 import random
 import discord
+import aiohttp  
 from redbot.core import commands, checks, Config
 from redbot.core.i18n import Translator, cog_i18n
 from .core import Core
@@ -15,6 +16,7 @@ class RandImages(Core, commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.reddit = None
+        self.session = None  # Initialize session for Reddit
 
     async def initialize(self):
         tokens = await self.bot.get_shared_api_tokens("reddit")
@@ -24,6 +26,7 @@ class RandImages(Core, commands.Cog):
                 client_secret=tokens["client_secret"],
                 user_agent=tokens["user_agent"]
             )
+            self.session = aiohttp.ClientSession()  # Create a session for Reddit
             print("Debug - Reddit instance created successfully")
         else:
             print("Debug - Not all Reddit credentials are set")
@@ -60,6 +63,12 @@ class RandImages(Core, commands.Cog):
             embed.add_field(name="Title", value=random_submission.title)
         
         await ctx.send(embed=embed)
+
+    async def close(self):
+        if self.session:
+            await self.session.close()  # Close the session when done
+
+    # Other commands (like cat, dog, etc.) do not need the session
 
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
