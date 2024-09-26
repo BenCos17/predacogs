@@ -2,7 +2,6 @@ import praw
 import random
 import discord
 from redbot.core import commands, checks, Config
-from redbot.core.bot import Red
 from redbot.core.i18n import Translator, cog_i18n
 from .core import Core
 from . import constants as sub
@@ -13,15 +12,8 @@ _ = Translator("Image", __file__)
 class RandImages(Core, commands.Cog):
     """Send random images (animals, art ...) from different APIs."""
 
-    def __init__(self, bot: Red):
+    def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=80085)
-        default_global = {
-            "reddit_client_id": None,
-            "reddit_client_secret": None,
-            "reddit_user_agent": None
-        }
-        self.config.register_global(**default_global)
         self.reddit = None
 
     async def initialize(self):
@@ -37,9 +29,20 @@ class RandImages(Core, commands.Cog):
             print("Debug - Not all Reddit credentials are set")
             print(f"Debug - Available tokens: {tokens}")
 
+    @commands.command()
+    @checks.is_owner()
+    async def setredditcredentials(self, ctx, client_id: str, client_secret: str, user_agent: str):
+        """Set Reddit API credentials"""
+        await self.bot.set_shared_api_tokens("reddit", 
+                                             client_id=client_id, 
+                                             client_secret=client_secret, 
+                                             user_agent=user_agent)
+        await self.initialize()
+        await ctx.send("Reddit credentials set.")
+
     async def _send_reddit_msg(self, ctx, name, emoji, sub, details):
         if not self.reddit:
-            return await ctx.send("Reddit credentials not set. Please set them with `[p]set api reddit client_id,YOUR_CLIENT_ID client_secret,YOUR_CLIENT_SECRET user_agent,YOUR_USER_AGENT`")
+            return await ctx.send("Reddit credentials not set. Please set them with `[p]setredditcredentials`")
         
         subreddit = self.reddit.subreddit('+'.join(sub))
         submissions = list(subreddit.hot(limit=100))
@@ -349,7 +352,6 @@ class RandImages(Core, commands.Cog):
             sub=sub.WALLPAPERS,
             details=True,
         )
-
 
 
 
