@@ -27,6 +27,7 @@ class RandImages(Core, commands.Cog):
             print("Debug - Reddit instance created successfully")
         else:
             print("Debug - Not all Reddit credentials are set")
+            print(f"Debug - Available tokens: {tokens}")
 
     @commands.command()
     @checks.is_owner()
@@ -352,8 +353,6 @@ class RandImages(Core, commands.Cog):
             details=True,
         )
 
-    async def _send_other_msg(self, ctx, name, emoji, source, img_url, img_arg, facts=False, facts_url=None, facts_arg=None):
-        # Implement this method for non-Reddit APIs
-        pass
+
 
 
