@@ -1,4 +1,5 @@
-from redbot.core import checks, commands
+import praw
+from redbot.core import commands, checks, Config
 from redbot.core.i18n import Translator, cog_i18n
 
 from .core import Core
@@ -9,15 +10,73 @@ _ = Translator("Image", __file__)
 
 
 @cog_i18n(_)
-class RandImages(Core):
+class RandImages(Core, commands.Cog):
     """Send random images (animals, art ...) from different APIs."""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.config = Config.get_conf(self, identifier=1234567890)
+        default_global = {
+            "reddit_client_id": None,
+            "reddit_client_secret": None,
+            "reddit_user_agent": None
+        }
+        self.config.register_global(**default_global)
+        self.reddit = None
+
+    async def initialize(self):
+        client_id = await self.config.reddit_client_id()
+        client_secret = await self.config.reddit_client_secret()
+        user_agent = await self.config.reddit_user_agent()
+        
+        if all([client_id, client_secret, user_agent]):
+            self.reddit = praw.Reddit(
+                client_id=client_id,
+                client_secret=client_secret,
+                user_agent=user_agent
+            )
+
+    @commands.group()
+    @checks.is_owner()
+    async def randimagesset(self, ctx):
+        """Settings for RandImages cog"""
+        pass
+
+    @randimagesset.command()
+    async def redditcredentials(self, ctx, client_id: str, client_secret: str, user_agent: str):
+        """Set Reddit API credentials"""
+        await self.config.reddit_client_id.set(client_id)
+        await self.config.reddit_client_secret.set(client_secret) 
+        await self.config.reddit_user_agent.set(user_agent)
+        await self.initialize()
+        await ctx.send("Reddit credentials set.")
+
+    async def _send_reddit_msg(self, ctx, name, emoji, sub, details):
+        if not self.reddit:
+            return await ctx.send("Reddit credentials not set. Please set them with `[p]randimagesset redditcredentials`")
+        
+        subreddit = self.reddit.subreddit('+'.join(sub))
+        submissions = list(subreddit.hot(limit=100))
+        if not submissions:
+            return await ctx.send(f"No results found for {name}.")
+        
+        random_submission = random.choice(submissions)
+        
+        embed = discord.Embed(title=f"{emoji} {name.capitalize()}")
+        embed.set_image(url=random_submission.url)
+        
+        if details:
+            embed.add_field(name="Author", value=random_submission.author)
+            embed.add_field(name="Subreddit", value=random_submission.subreddit)
+            embed.add_field(name="Title", value=random_submission.title)
+        
+        await ctx.send(embed=embed)
 
     @commands.cooldown(1, 0.5, commands.BucketType.user)
     @commands.bot_has_permissions(embed_links=True)
     @commands.command()
     async def art(self, ctx: commands.Context):
         """Send art from random subreddits."""
-
         await self._send_reddit_msg(
             ctx, name=_("art image"), emoji="\N{ARTIST PALETTE}", sub=sub.ART, details=True
         )
