@@ -1,15 +1,12 @@
 import praw
 import random
+import discord
 from redbot.core import commands, checks, Config
 from redbot.core.i18n import Translator, cog_i18n
-import discord
-
 from .core import Core
 from . import constants as sub
 
-
 _ = Translator("Image", __file__)
-
 
 @cog_i18n(_)
 class RandImages(Core, commands.Cog):
@@ -365,3 +362,12 @@ class RandImages(Core, commands.Cog):
             sub=sub.WALLPAPERS,
             details=True,
         )
+
+    async def _send_other_msg(self, ctx, name, emoji, source, img_url, img_arg, facts=False, facts_url=None, facts_arg=None):
+        # Implement this method for non-Reddit APIs
+        pass
+
+def setup(bot):
+    cog = RandImages(bot)
+    bot.add_cog(cog)
+    bot.loop.create_task(cog.initialize())
