@@ -32,9 +32,10 @@ class RandImages(Core, commands.Cog):
                 client_secret=tokens["client_secret"],
                 user_agent=tokens["user_agent"]
             )
-            print(f"Debug - Reddit instance created successfully with User-Agent: {tokens['user_agent']}")
+            print("Debug - Reddit instance created successfully")
         else:
             print("Debug - Not all Reddit credentials are set")
+            print(f"Debug - Available tokens: {tokens}")
 
     async def _send_reddit_msg(self, ctx, name, emoji, sub, details):
         if not self.reddit:
