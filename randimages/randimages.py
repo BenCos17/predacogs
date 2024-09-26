@@ -1,7 +1,7 @@
 import praw
 import random
 import discord
-from redbot.core import commands, checks, Config
+from redbot.core import commands, checks
 from redbot.core.i18n import Translator, cog_i18n
 from .core import Core
 from . import constants as sub
@@ -30,7 +30,7 @@ class RandImages(Core, commands.Cog):
 
     @commands.command()
     @checks.is_owner()
-    async def redditset(self, ctx, client_id: str, client_secret: str, user_agent: str):
+    async def setredditcredentials(self, ctx, client_id: str, client_secret: str, user_agent: str):
         """Set Reddit API credentials"""
         await self.bot.set_shared_api_tokens("reddit", 
                                              client_id=client_id, 
@@ -41,7 +41,7 @@ class RandImages(Core, commands.Cog):
 
     async def _send_reddit_msg(self, ctx, name, emoji, sub, details):
         if not self.reddit:
-            return await ctx.send("Reddit credentials not set. Please set them with `[p]redditset`")
+            return await ctx.send("Reddit credentials not set. Please set them with `[p]setredditcredentials`")
         
         subreddit = self.reddit.subreddit('+'.join(sub))
         submissions = list(subreddit.hot(limit=100))
@@ -356,7 +356,4 @@ class RandImages(Core, commands.Cog):
         # Implement this method for non-Reddit APIs
         pass
 
-def setup(bot):
-    cog = RandImages(bot)
-    bot.add_cog(cog)
-    bot.loop.create_task(cog.initialize())
+
