@@ -2,6 +2,7 @@ import praw
 import random
 from redbot.core import commands, checks, Config
 from redbot.core.i18n import Translator, cog_i18n
+import discord
 
 from .core import Core
 from . import constants as sub
