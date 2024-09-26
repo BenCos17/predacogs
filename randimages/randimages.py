@@ -25,23 +25,20 @@ class RandImages(Core, commands.Cog):
         self.reddit = None
 
     async def initialize(self):
-        client_id = await self.config.reddit_client_id()
-        client_secret = await self.config.reddit_client_secret()
-        user_agent = await self.config.reddit_user_agent()
-        
-        if all([client_id, client_secret, user_agent]):
+        tokens = await self.bot.get_shared_api_tokens("reddit")
+        if tokens.get("client_id") and tokens.get("client_secret") and tokens.get("user_agent"):
             self.reddit = praw.Reddit(
-                client_id=client_id,
-                client_secret=client_secret,
-                user_agent=user_agent
+                client_id=tokens["client_id"],
+                client_secret=tokens["client_secret"],
+                user_agent=tokens["user_agent"]
             )
-            print("Debug - Reddit instance created successfully")
+            print(f"Debug - Reddit instance created successfully with User-Agent: {tokens['user_agent']}")
         else:
             print("Debug - Not all Reddit credentials are set")
 
     async def _send_reddit_msg(self, ctx, name, emoji, sub, details):
         if not self.reddit:
-            return await ctx.send("Reddit credentials not set. Please set them with `[p]set api reddit`")
+            return await ctx.send("Reddit credentials not set. Please set them with `[p]set api reddit client_id,YOUR_CLIENT_ID client_secret,YOUR_CLIENT_SECRET user_agent,YOUR_USER_AGENT`")
         
         subreddit = self.reddit.subreddit('+'.join(sub))
         submissions = list(subreddit.hot(limit=100))
@@ -351,11 +348,6 @@ class RandImages(Core, commands.Cog):
             sub=sub.WALLPAPERS,
             details=True,
         )
-
-def setup(bot):
-    cog = RandImages(bot)
-    bot.add_cog(cog)
-    bot.loop.create_task(cog.initialize())
 
 
 
